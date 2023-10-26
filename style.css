@@ -1,0 +1,76 @@
+.content{
+    display:none;
+    width:100%;
+    height:100%;
+    top:0;
+    left:0;
+
+}
+.tab{
+    height: 100%;
+    width: auto;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(#5a8f63, #eeda80);
+}
+table{
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    background:rgb(253, 240, 183);
+}
+#ownershipTable{
+    width: 30%;
+    
+}
+td{
+    border: 1px solid #000;
+    padding: 10px;
+}
+#contestDataTable tr:hover{
+    opacity: 0.8;
+}
+th{
+    border: 1px solid #000;
+    padding: 10px;
+    background: rgb(253, 240, 183);
+}
+.splitScreen{
+    float:left;
+    overflow-y: auto;
+    width: 50%;
+    height:100vh;
+    background: #eeeeee;
+}
+.downloadChunk{
+    width: 100%;
+    padding: 10px;
+    background: rgb(253, 240, 183);
+    border: 3px solid #000;
+}
+body{
+    background:rgb(179, 219, 192);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+}
+h1{
+    text-align: center;
+    padding: 10px;
+    font-size: 50px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 700;
+    color: #056411;
+}
+select, option, input, button{
+    padding: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    background: linear-gradient(#acebb6, #e9dfb5);
+    border: 3px solid #000;
+}
+select:hover, option:hover, button:hover{
+    opacity: 0.8;
+    cursor: pointer;
+}
