@@ -14,17 +14,17 @@
     <div id="header">
         <h1>NBA Builder</h1>
     </div>
-    <div id="tabs">
+    <div id="tabs" class="holdTop">
         <button id="contestInfo" class="tab" onclick="openTab('contest')">Contest Data</button>
         <button id="playerInfo" class="tab" onclick="openTab('player')">Player Data</button>
         <button id="builderInfo" class="tab" onclick="openTab('builder')">Builder</button>
         <button id="ownershipInfo" class="tab" onclick="{openTab('ownership'); updateOwnership()}">Ownership</button>
     </div>
     <div id="contest" style="display:block" class="content">
-        <div class="downloadChunk">Import CSV: <input type="file" id="dksalaries" onchange="handlecsv('dksalaries')"></div>
+        <div class="downloadChunk holdTop" style="top:45px">Import CSV: <input type="file" id="dksalaries" onchange="handlecsv('dksalaries')"></div>
         <table id="contestDataTable">
             <thead>
-                <tr>
+                <tr  class="holdTop" style="top:105px">
                     <th>Position</th>
                     <th>Name</th>
                     <th>Salary</th>
@@ -42,14 +42,17 @@
         </table>
     </div>
     <div id="player" class="content">
-        <div class="downloadChunk"><select id="teamSelect" oninput="filterByTeam(this, 'playerAdjustTable')">
-            <option value="All">All</option>
-        </select></div>
-        <table id="teamSummary">
+        <div class="downloadChunk holdTop" style="top:45px">
+            <select id="teamSelect" oninput="filterByTeam(this, 'playerAdjustTable')">
+                <option value="All">All</option>
+            </select>
+            <button onclick="resetPlayerAdjustTable()">Reset</button>
+        </div>
+        <table id="teamSummary" class="holdTop"  style="top:102px">
             <thead>
                 <th>Team</th>
                 <th>FPs/Minute</th>
-                <th>Minutes</th>
+                <th>Minutes (240/team)</th>
                 <th>Proj</th>
             </thead>
             <tbody>
@@ -58,11 +61,14 @@
         </table>
         <table id="playerAdjustTable">
             <thead>
-                <th>Player</th>
-                <th>Team</th>
-                <th>FPs/Minute</th>
-                <th>Minutes</th>
-                <th>Proj</th>
+                <tr class="holdTop" style="top: 187px">
+                    <th>Player</th>
+                    <th>Team</th>
+                    <th>FPs/Minute</th>
+                    <th>Minutes</th>
+                    <th>Proj</th>
+                    <th>Injured</th>
+                </tr>
             </thead>
             <tbody>
 
@@ -70,30 +76,32 @@
         </table>
     </div>
     <div id="builder" class="content">
-        <div class="downloadChunk">Lineups to build: <input type="number" id="lineupsToBuild" value="20" min="1">
+        <div class="downloadChunk holdTop" style="top: 45px;">Lineups to build: <input type="number" id="lineupsToBuild" value="20" min="1">
         <button class="buildLineups classicBuilder" onclick="buildLineups()">Build Lineups</button></div>
-        <div class="csvSection">
+        <div class="csvSection holdTop" style="top:102px">
             <!--<label style="float:none" for="contestcsv">Import salaries: </label><input type="file" name="contestcsv" id="contestcsv" oninput="handlecsv('contestcsv')">-->
-            <div class="downloadChunk"><button onclick="downloadLineups()" class="downloadLineupsButton classicBuilder">Download Lineups for Initial Upload</button></div>
-            <div class="downloadChunk"><label style="float:none" for="editcsv">Lineups for edit: </label><input type="file" name="editcsv" id="editcsv" oninput="handleLineupscsv()">
+            <div class="downloadChunk holdTop"  style="top: 102px;"><button onclick="downloadLineups()" class="downloadLineupsButton classicBuilder">Download Lineups for Initial Upload</button></div>
+            <div class="downloadChunk holdTop" style="top: 159px;"><label style="float:none" for="editcsv">Lineups for edit: </label><input type="file" name="editcsv" id="editcsv" oninput="handleLineupscsv()">
             <button onclick="downloadEditedLineups()" class="downloadLineupsButton classicBuilder">Download Edited Lineups</button></div>
         </div>
         <div id="Classic" class="builderSection classicBuilder">
             <div>
-                <div class="downloadChunk">Lineups built: <text id="lineupsBuilt">0</text></div>
+                <div class="downloadChunk holdTop"  style="top: 216px;">Lineups built: <text id="lineupsBuilt">0</text><button onclick="clearLineups()">Clear</button></div>
                 
                 <table id="lineupTable">
                     <thead>
-                        <th>PG</th>
-                        <th>SG</th>
-                        <th>SF</th>
-                        <th>PF</th>
-                        <th>C</th>
-                        <th>G</th>
-                        <th>F</th>
-                        <th>UTIL</th>
-                        <th>Salary</th>
-                        <th>Proj</th>
+                        <tr class="holdTop"  style="top: 273px;">
+                            <th>PG</th>
+                            <th>SG</th>
+                            <th>SF</th>
+                            <th>PF</th>
+                            <th>C</th>
+                            <th>G</th>
+                            <th>F</th>
+                            <th>UTIL</th>
+                            <th>Salary</th>
+                            <th>Proj</th>
+                        </tr>
                     </thead>
                     <tbody>
                         
@@ -104,12 +112,14 @@
     </div>
     <div id="ownership" class="content">
 
-        <br><div class="downloadChunk"><text>Player pool size: <text id="poolSize">0</text></text></div>  
+        <div class="downloadChunk holdTop" style="top:45px"><text>Player pool size: <text id="poolSize">0</text></text></div>  
         
         <table id="ownershipTable">
             <thead>
-                <th>Player</th>
-                <th>Own %</th>
+                <tr class="holdTop" style="top:89px">
+                    <th>Player</th>
+                    <th>Own %</th>
+                </tr>
             </thead>
             <tbody>
                 
