@@ -153,7 +153,6 @@ $(document).ready(function(){
     updateContestDataTable();
     colorRowsBasedOnTeam(document.getElementById('contestDataTable'), 3);
     colorRowsBasedOnTeam(document.getElementById('playerAdjustTable'), 1);
-    longTermOut();
 });
 
 // Get info from JSON file
@@ -170,12 +169,227 @@ function getInfoFromJSON(file){
     });
     return json;
 }
+// replace accented characters with non-accented characters
+function replaceAccented(str){
+    const latinRegEx = /[\xc0-\xd6\xd8-\xf6\xf8-\xff\u0100-\u017f]/g;
+    const comboRegEx = `[\\u0300-\\u036f\\ufe20-\\ufe2f\\u20d0-\\u20ff]`;
+
+    /** Used to map Latin Unicode letters to basic Latin letters. */
+    const latinUnicodeLetters = {
+    // Latin-1 Supplement block.
+    '\xc0': 'A',
+    '\xc1': 'A',
+    '\xc2': 'A',
+    '\xc3': 'A',
+    '\xc4': 'A',
+    '\xc5': 'A',
+    '\xe0': 'a',
+    '\xe1': 'a',
+    '\xe2': 'a',
+    '\xe3': 'a',
+    '\xe4': 'a',
+    '\xe5': 'a',
+    '\xc7': 'C',
+    '\xe7': 'c',
+    '\xd0': 'D',
+    '\xf0': 'd',
+    '\xc8': 'E',
+    '\xc9': 'E',
+    '\xca': 'E',
+    '\xcb': 'E',
+    '\xe8': 'e',
+    '\xe9': 'e',
+    '\xea': 'e',
+    '\xeb': 'e',
+    '\xcc': 'I',
+    '\xcd': 'I',
+    '\xce': 'I',
+    '\xcf': 'I',
+    '\xec': 'i',
+    '\xed': 'i',
+    '\xee': 'i',
+    '\xef': 'i',
+    '\xd1': 'N',
+    '\xf1': 'n',
+    '\xd2': 'O',
+    '\xd3': 'O',
+    '\xd4': 'O',
+    '\xd5': 'O',
+    '\xd6': 'O',
+    '\xd8': 'O',
+    '\xf2': 'o',
+    '\xf3': 'o',
+    '\xf4': 'o',
+    '\xf5': 'o',
+    '\xf6': 'o',
+    '\xf8': 'o',
+    '\xd9': 'U',
+    '\xda': 'U',
+    '\xdb': 'U',
+    '\xdc': 'U',
+    '\xf9': 'u',
+    '\xfa': 'u',
+    '\xfb': 'u',
+    '\xfc': 'u',
+    '\xdd': 'Y',
+    '\xfd': 'y',
+    '\xff': 'y',
+    '\xc6': 'Ae',
+    '\xe6': 'ae',
+    '\xde': 'Th',
+    '\xfe': 'th',
+    '\xdf': 'ss',
+    // Latin Extended-A block.
+    '\u0100': 'A',
+    '\u0102': 'A',
+    '\u0104': 'A',
+    '\u0101': 'a',
+    '\u0103': 'a',
+    '\u0105': 'a',
+    '\u0106': 'C',
+    '\u0108': 'C',
+    '\u010a': 'C',
+    '\u010c': 'C',
+    '\u0107': 'c',
+    '\u0109': 'c',
+    '\u010b': 'c',
+    '\u010d': 'c',
+    '\u010e': 'D',
+    '\u0110': 'D',
+    '\u010f': 'd',
+    '\u0111': 'd',
+    '\u0112': 'E',
+    '\u0114': 'E',
+    '\u0116': 'E',
+    '\u0118': 'E',
+    '\u011a': 'E',
+    '\u0113': 'e',
+    '\u0115': 'e',
+    '\u0117': 'e',
+    '\u0119': 'e',
+    '\u011b': 'e',
+    '\u011c': 'G',
+    '\u011e': 'G',
+    '\u0120': 'G',
+    '\u0122': 'G',
+    '\u011d': 'g',
+    '\u011f': 'g',
+    '\u0121': 'g',
+    '\u0123': 'g',
+    '\u0124': 'H',
+    '\u0126': 'H',
+    '\u0125': 'h',
+    '\u0127': 'h',
+    '\u0128': 'I',
+    '\u012a': 'I',
+    '\u012c': 'I',
+    '\u012e': 'I',
+    '\u0130': 'I',
+    '\u0129': 'i',
+    '\u012b': 'i',
+    '\u012d': 'i',
+    '\u012f': 'i',
+    '\u0131': 'i',
+    '\u0134': 'J',
+    '\u0135': 'j',
+    '\u0136': 'K',
+    '\u0137': 'k',
+    '\u0138': 'k',
+    '\u0139': 'L',
+    '\u013b': 'L',
+    '\u013d': 'L',
+    '\u013f': 'L',
+    '\u0141': 'L',
+    '\u013a': 'l',
+    '\u013c': 'l',
+    '\u013e': 'l',
+    '\u0140': 'l',
+    '\u0142': 'l',
+    '\u0143': 'N',
+    '\u0145': 'N',
+    '\u0147': 'N',
+    '\u014a': 'N',
+    '\u0144': 'n',
+    '\u0146': 'n',
+    '\u0148': 'n',
+    '\u014b': 'n',
+    '\u014c': 'O',
+    '\u014e': 'O',
+    '\u0150': 'O',
+    '\u014d': 'o',
+    '\u014f': 'o',
+    '\u0151': 'o',
+    '\u0154': 'R',
+    '\u0156': 'R',
+    '\u0158': 'R',
+    '\u0155': 'r',
+    '\u0157': 'r',
+    '\u0159': 'r',
+    '\u015a': 'S',
+    '\u015c': 'S',
+    '\u015e': 'S',
+    '\u0160': 'S',
+    '\u015b': 's',
+    '\u015d': 's',
+    '\u015f': 's',
+    '\u0161': 's',
+    '\u0162': 'T',
+    '\u0164': 'T',
+    '\u0166': 'T',
+    '\u0163': 't',
+    '\u0165': 't',
+    '\u0167': 't',
+    '\u0168': 'U',
+    '\u016a': 'U',
+    '\u016c': 'U',
+    '\u016e': 'U',
+    '\u0170': 'U',
+    '\u0172': 'U',
+    '\u0169': 'u',
+    '\u016b': 'u',
+    '\u016d': 'u',
+    '\u016f': 'u',
+    '\u0171': 'u',
+    '\u0173': 'u',
+    '\u0174': 'W',
+    '\u0175': 'w',
+    '\u0176': 'Y',
+    '\u0177': 'y',
+    '\u0178': 'Y',
+    '\u0179': 'Z',
+    '\u017b': 'Z',
+    '\u017d': 'Z',
+    '\u017a': 'z',
+    '\u017c': 'z',
+    '\u017e': 'z',
+    '\u0132': 'IJ',
+    '\u0133': 'ij',
+    '\u0152': 'Oe',
+    '\u0153': 'oe',
+    '\u0149': "'n",
+    '\u017f': 's',
+    };
+
+    const basePropertyOf = (object) => (key) => object[key];
+    const characterMap = basePropertyOf(latinUnicodeLetters);
+        
+    if(str && typeof str === 'string'){
+        return str.replace(latinRegEx, characterMap).normalize('NFD').replace(new RegExp(comboRegEx, 'g'), '');
+    }
+}
 
 // Get player info from JSON file
 function getPlayerInfo(){
-    var json = getInfoFromJSON("playerdefaults.json");
+    var playerdefaults = getInfoFromJSON("playerdefaults.json");
+    var json = {};
+    for(let p in playerdefaults){
+        let name = replaceAccented(playerdefaults[p]['Player']);
+        let DKFPs = Number(playerdefaults[p]['FG'])*2 + Number(playerdefaults[p]['3P'])*1.5 + Number(playerdefaults[p]['FT']) + Number(playerdefaults[p]['TRB'])*1.2 + Number(playerdefaults[p]['AST'])*1.5 + Number(playerdefaults[p]['STL'])*3 + Number(playerdefaults[p]['BLK'])*3 - Number(playerdefaults[p]['TOV'])*1;
+        let DKFPsPerMin = DKFPs/Number(playerdefaults[p]['MP']);
+        let MinsPerGame = Number(playerdefaults[p]['MP'])/Number(playerdefaults[p]['G']);
+        json[name] = {'DKFPsPerMin': DKFPsPerMin, 'MinsPerGame': MinsPerGame};
+    }
     var minutesProjection = getDataFromLastStats("MIN");
-    console.log(minutesProjection);
     var teams = [];
     // add this info plus team to playerAdjust table; make FPs/Minute a range between 0 and 2 with step of 0.1; make minutes a range between 0 and 48 with step of 1, make Proj a text that updates to fps/minute * minutes
     var table = document.getElementById("playerAdjustTable");
@@ -722,10 +936,7 @@ function toggleInjured(btn){
 }
 
 function applyInjury(player, team){
-    var injuries = injuryBenefit()[player];
-    if(injuries == undefined){
-        injuries = {};
-    }
+
     var att = playerNameAsAttribute(player);
     var playerAdjustTable = document.getElementById("playerAdjustTable");
     var adjustRows = playerAdjustTable.rows;
@@ -740,14 +951,9 @@ function applyInjury(player, team){
             updateProj(r.cells[3].getElementsByTagName("input")[0]);
 
         }else if(r.cells[1].innerHTML == team){
-            if(injuries[r.cells[0].innerHTML] == undefined){
-                injuries[r.cells[0].innerHTML] = {
-                    "Minutes": 0.02,
-                    "FPPM": 0.05
-                }
-            }
-            let minboost = injuries[r.cells[0].innerHTML]['Minutes'];
-            let projboost = injuries[r.cells[0].innerHTML]['FPPM'];
+
+            let minboost = 0.03 
+            let projboost = 0.06
             if(r.cells[2].getElementsByTagName("input")[0].value != 0) r.cells[2].setAttribute("origProj", r.cells[2].getElementsByTagName("input")[0].value);
             r.cells[2].setAttribute(att, projboost)
             r.cells[2].getElementsByTagName("input")[0].value = Number(r.cells[2].getElementsByTagName("input")[0].value) * (1 + projboost);
@@ -796,563 +1002,6 @@ function clearLineups(){
         table.deleteRow(i);
     }
     document.getElementById('lineupsBuilt').innerHTML = 0;
-}
-
-function injuryBenefit(){
-    var injuries = {
-        "Donovan Mitchell":{
-            "Evan Mobley":{
-                "Minutes": 0.1,
-                "FPPM": 0.05
-            },
-            "Darius Garland":{
-                "Minutes": 0.1,
-                "FPPM": 0.12
-            },
-            "Caris Levert":{
-                "Minutes": 0.1,
-                "FPPM": 0.05
-            }
-            
-        },
-        "Darius Garland":{
-            "Evan Mobley":{
-                "Minutes": 0.15,
-                "FPPM": 0.05
-            },
-            "Donovan Mitchell":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Caris Levert":{
-                "Minutes": 0.2,
-                "FPPM": 0.05
-            }
-        },
-        "Devin Booker":{
-            "Kevin Durant":{
-                "Minutes": 0.15,
-                "FPPM": 0.1
-            },
-            "Nassir Little":{
-                "Minutes": 0.13,
-                "FPPM": 0.06
-            },
-            "Grayson Allen":{
-                "Minutes": 0.3,
-                "FPPM":0.2
-            },
-            "Eric Gordon":{
-                "Minutes": 0.05,
-                "FPPM": 0.08
-            },
-            "Jordan Goodwin":{
-                "Minutes": 0.3,
-                "FPPM": 0.02
-            },
-            "Jusuf Nurkic":{
-                "Minutes": 0.01,
-                "FPPM": 0.05
-            }
-        },
-        "Tyrese Haliburton":{
-            "Aaron Nesmith":{
-                "Minutes": 0.1,
-                "FPPM": 0.2
-            },
-            "Isaiah Jackson":{
-                "Minutes": 0.1,
-                "FPPM": 0.05
-            },
-            "Bennedict Mathurin":{
-                "Minutes": 0.1,
-                "FPPM": 0.7
-            },
-            "Myles Turner":{
-                "Minutes": 0.1,
-                "FPPM": 0.6
-            },
-            "T.J. McConnell":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Bruce Brown":{
-                "Minutes": 0.25,
-                "FPPM": 0.05
-            },
-
-        },
-        "Trae Young":{
-            "Dejounte Murray":{
-                "Minutes": 0.13,
-                "FPPM": 0.07
-            },
-            "Jalen Johnson":{
-                "Minutes": 0.11,
-                "FPPM": 0.05
-            },
-            "Saddiq Bey":{
-                "Minutes": 0.14,
-                "FPPM": 0.03
-            },
-            "De'Andre Hunter":{
-                "Minutes": 0.08,
-                "FPPM": 0.03
-            },
-        },
-        "Spencer Dinwiddie":{
-            "Cameron Johnson":{
-                "Minutes": 0.1,
-                "FPPM": 0.3
-            },
-            "Dennis Smith Jr.":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Day'Ron Sharpe":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Lonnie Walker IV":{
-                "Minutes": 0.15,
-                "FPPM": 0.2
-            },
-            "Dorian Finney-Smith":{
-                "Minutes": 0.2,
-                "FPPM": 0.1
-            },
-            "Mikal Bridges":{
-                "Minutes": 0.2,
-                "FPPM": 0.1
-            },
-            
-        },
-        "Dennis Smith Jr.":{
-            "Nicolas Claxton":{
-                "Minutes": 0.1,
-                "FPPM": 0.6
-            }
-            ,"Spencer Dinwiddie":{
-                "Minutes": 0.1,
-                "FPPM": 0.2
-            },
-            "Royce O'Neale":{
-                "Minutes": 0.2,
-                "FPPM": 0.1
-            },
-        },
-        "Jimmy Butler":{
-            "Caleb Martin":{
-                "Minutes": 0.1,
-                "FPPM": 0.4
-            },
-            "Dru Smith":{
-                "Minutes": 0.15,
-                "FPPM": 0.3
-            },
-            "Duncan Robinson":{
-                "Minutes": 0.2,
-                "FPPM": 0.01
-            },
-            "Tyler Herro":{
-                "Minutes": 0.3,
-                "FPPM": 0.01
-            },
-            "Kyle Lowry":{
-                "Minutes": 0.3,
-                "FPPM": 0.01
-            },
-            "Bam Adebayo":{
-                "Minutes": 0.3,
-                "FPPM": 0.01
-            },
-            "Thomas Bryant":{
-                "Minutes": 0.3,
-                "FPPM": 0.1
-            },
-            "Jaime Jaquez Jr.":{
-                "Minutes": 0.12,
-                "FPPM": 0.1
-            },
-
-        },
-        "Brandon Ingram":{
-            "Dyson Daniels":{
-                "Minutes": 0.2,
-                "FPPM": 0.3
-            },
-            "CJ McCollum":{
-                "Minutes": 0.2,
-                "FPPM": 0.1
-            },
-            "Matt Ryan":{
-                "Minutes": 0.15,
-                "FPPM": 0.1
-            },
-            "Zion Williamson":{
-                "Minutes": 0.1,
-                "FPPM": 0.01
-            },
-            "Jonas Valanciunas":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Bam Adebayo":{
-            "Caleb Martin":{
-                "Minutes": 0.1,
-                "FPPM": 0.4
-            },
-            "Dru Smith":{
-                "Minutes": 0.15,
-                "FPPM": 0.3
-            },
-            "Duncan Robinson":{
-                "Minutes": 0.2,
-                "FPPM": 0.01
-            },
-            "Tyler Herro":{
-                "Minutes": 0.3,
-                "FPPM": 0.01
-            },
-            "Kyle Lowry":{
-                "Minutes": 0.3,
-                "FPPM": 0.01
-            },
-            "Jimmy Butler":{
-                "Minutes": 0.3,
-                "FPPM": 0.01
-            },
-            "Thomas Bryant":{
-                "Minutes": 0.01,
-                "FPPM": 0.1
-            },
-            "Jaime Jaquez Jr.":{
-                "Minutes": 0.12,
-                "FPPM": 0.1
-            },
-            "Jamal Cain":{
-                "Minutes": 0.18,
-                "FPPM": 0.2
-            }
-        },
-        "Zach LaVine":{
-            "Jevon Carter":{
-                "Minutes": 0.2,
-                "FPPM": 0.2
-            }
-            , "Torrey Craig":{
-                "Minutes": 0.2,
-                "FPPM": 0.2
-            }
-            , "Patrick Williams":{
-                "Minutes": 0.2,
-                "FPPM": 0.2
-            }
-            , "Coby White":{
-                "Minutes": 0.2,
-                "FPPM": 0.2
-            }
-            , "DeMar DeRozan":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            }
-            , "Andre Drummond":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            }
-            , "Nikola Vucevic":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            }
-
-        },
-        "Klay Thompson":{
-            "Stephen Curry":{
-                "Minutes": 0.1,
-                "FPPM": 0.2
-            }
-            , "Jonathan Kuminga":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Gary Payton II":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            }
-            , "Andrew Wiggins":{
-                "Minutes": 0.1,
-                "FPPM": 0.01
-            }
-            , "Trayce Jackson-Davis":{
-                "Minutes": 0.1,
-                "FPPM": 0.01
-            }
-            , "Draymond Green":{
-                "Minutes": 0.1,
-                "FPPM": 0.01
-            }
-            , "Dario Saric":{
-                "Minutes": 0.1,
-                "FPPM": 0.01
-            }
-        },
-        "Jalen Duren":{
-            "Cade Cunningham":{
-                "Minutes": 0.1,
-                "FPPM": 0.15
-            },
-            "Isaiah Stewart":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Marvin Bagley III":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        }, 
-        "Caris LeVert":{
-            "Evan Mobley":{
-                "Minutes": 0.01,
-                "FPPM": 0.05
-            },
-            "Darius Garland":{
-                "Minutes": 0.05,
-                "FPPM": 0.1
-            },
-            "Donovan Mitchell":{
-                "Minutes": 0.01,
-                "FPPM": 0.1
-            }
-            , "Dean Wade":{
-                "Minutes": 0.2,
-                "FPPM": 0.1
-            }
-            , "Isaac Okoro":{
-                "Minutes": 0.2,
-                "FPPM": 0.1
-            }
-            , "Emoni Bates":{
-                "Minutes": 0.2,
-                "FPPM": 0.3
-            }
-
-        }, 
-        "Jarrett Allen":{
-
-        }, 
-        "Nic Claxton":{
-            "Cameron Johnson":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Spencer Dinwiddie":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Dennis Smith Jr.":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Ben Simmons":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Bennedict Mathurin":{
-            "Tyrese Haliburton":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Obi Toppin":{
-                "Minutes": 0.1,
-                "FPPM": 0.15
-            },
-            "Myles Turner":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "T.J. McConnell":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Aaron Nesmith":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            }
-            , "Jalen Smith":{
-                "Minutes": 0.05,
-                "FPPM": 0.1
-            }
-        },
-        "Jonathan Kuminga":{
-            "Andrew Wiggins":{
-                "Minutes": 0.05,
-                "FPPM": 0.05
-            },
-            "Moses Moody":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Cameron Johnson":{
-            "Spencer Dinwiddie":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Day'Ron Sharpe":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Mikal Bridges":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Daniel Gafford":{
-            "Tyus Jones":{
-                "Minutes": 0.15,
-                "FPPM": 0.15
-            },
-            "Kyle Kuzma":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Deni Avdija":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Delon Wright":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Jaden McDaniels":{
-            "Rudy Gobert":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Naz Reid":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Kyle Anderson":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Caleb Martin":{
-            "Dru Smith":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Tyler Herro":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Jalen Smith":{
-            "Andrew Nembhard":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Buddy Hield":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Bruce Brown":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Dario Saric":{
-            "Moses Moody":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Andrew Wiggins":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-            "Klay Thompson":{
-                "Minutes": 0.1,
-                "FPPM": 0.1
-            },
-        },
-        "Rui Hachimura":{
-            "Christian Wood":{
-                "Minutes": 0.05,
-                "FPPM": 0.05
-            },
-            "Cam Reddish":{
-                "Minutes": 0.05,
-                "FPPM": 0.05
-            },
-        },
-        "Robert Covington":{
-
-        },
-        "Terrance Mann":{
-
-        },
-        "Marjon Beauchamp":{
-
-        },
-        "Nicolas Batum":{
-
-        },
-        "Cam Reddish":{
-
-        },
-        "KJ Martin":{
-        },
-        "Shake Milton":{
-
-        },
-        "Marcus Morris Sr.":{
-        },
-        "Cody Martin":{
-
-        },
-        "Kyrie Irving":{
-            "Luka Doncic":{
-                "Minutes": 0.05,
-                "FPPM": 0.05
-            },
-            "Dante Exum":{
-                "Minutes": 0.05,
-                "FPPM": 0.05
-            },
-            "Seth Curry":{
-                "Minutes": 0.07,
-                "FPPM": 0.05
-            },
-            "Derrick Jones Jr.":{
-                "Minutes": 0.05,
-                "FPPM": 0.05
-            },
-        }
-
-    }
-    return injuries;
-}
-
-function longTermOut(){
-    var out = getInfoFromJSON("longTermInjured.json");
-    var playerAdjustTable = document.getElementById("playerAdjustTable");
-    var adjustRows = playerAdjustTable.rows;
-    for(let r of adjustRows){
-        if(r.rowIndex == 0) continue;
-        if(out.includes(r.cells[0].innerHTML)){
-            r.cells[2].getElementsByTagName("input")[0].value = 0;
-            r.cells[3].getElementsByTagName("input")[0].value = 0;
-            r.cells[5].getElementsByTagName("button")[0].innerHTML = "Injured";
-            r.cells[5].getElementsByTagName("button")[0].className = "injured";
-
-            updateProj(r.cells[2].getElementsByTagName("input")[0]);
-            updateProj(r.cells[3].getElementsByTagName("input")[0]);
-        }
-    }
 }
 
 function colorByScale(min, max, value){
