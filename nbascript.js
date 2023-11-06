@@ -147,12 +147,21 @@ function openTab(element){
     tab.style.display = "block";
 }
 
-$(document).ready(function(){
-    loadtableDataNBA();
-    getPlayerInfo();
-    updateContestDataTable();
-    colorRowsBasedOnTeam(document.getElementById('contestDataTable'), 3);
-    colorRowsBasedOnTeam(document.getElementById('playerAdjustTable'), 1);
+$(document).ready(async function(){
+    let promise = new Promise((resolve) => {
+        loadtableDataNBA();
+        resolve();
+    });
+    promise.then(() => {
+        return getPlayerInfo();
+    }).then(() => {
+        
+        return updateContestDataTable();
+    }).then(() => {
+        colorRowsBasedOnTeam(document.getElementById('contestDataTable'), 3);
+        colorRowsBasedOnTeam(document.getElementById('playerAdjustTable'), 1);
+        return;
+    });
 });
 
 // Get info from JSON file
@@ -379,7 +388,8 @@ function replaceAccented(str){
 }
 
 // Get player info from JSON file
-function getPlayerInfo(){
+async function getPlayerInfo(){
+    let promise = new Promise((resolve) => {
     var playerdefaults = getInfoFromJSON("season_stats.json");
     var json = {};
     for(let p in playerdefaults){
@@ -390,69 +400,66 @@ function getPlayerInfo(){
         json[name] = {'DKFPsPerMin': DKFPsPerMin, 'MinsPerGame': MinsPerGame};
     }
     var minutesProjection = getDataFromLastStats("MIN");
+    resolve([json, minutesProjection]);
+    });
 
-    for(let p in minutesProjection){
-        if(p in json) minutesProjection[p] = 0.7*json[p]['MinsPerGame'] + 0.3*Number(minutesProjection[p].substring(0,2)); else minutesProjection[p] = Number(minutesProjection[p].substring(0,2));
-    }
-    // console.log(minutesProjection);
-    // console.log(json);
-    var teams = [];
-    // add this info plus team to playerAdjust table; make FPs/Minute a range between 0 and 2 with step of 0.1; make minutes a range between 0 and 48 with step of 1, make Proj a text that updates to fps/minute * minutes
-    var table = document.getElementById("playerAdjustTable");
-    var contestDataTable = document.getElementById("contestDataTable");
-    var rows = contestDataTable.rows;
-    for(let r of rows){
-        if(r.rowIndex == 0) continue;
-        var row = table.insertRow(-1);
-        var name = row.insertCell(0);
-        var team = row.insertCell(1);
-        var fps = row.insertCell(2);
-        var mins = row.insertCell(3);
-        var proj = row.insertCell(4);
-        var injured = row.insertCell(5);
+    promise.then((data) => {
+        var json = data[0];
+        var minutesProjection = data[1];
+        for(let p in json){
+            if(p in minutesProjection) json[p]['MinsPerGame'] = 0.7*json[p]['MinsPerGame'] + 0.3*Number(minutesProjection[p].substring(0,2));
+        }
+        return json;
+    }).then((data) => {
+        console.log(data);
 
-        var player = r.cells[1].innerHTML;
-        if(localStorage.savedPlayerDataNBA){
-            var playerData = JSON.parse(localStorage.savedPlayerDataNBA);
-            if(player in playerData){
-                var ppm = Number(playerData[player]['DKFPsPerMin']).toFixed(2);
-                if(player in minutesProjection) var mpg = minutesProjection[player].toFixed(0); else var mpg = 0;
-            }else if(player in json) {
-                var ppm = json[player]['DKFPsPerMin'].toFixed(2);
-                if(player in minutesProjection) var mpg = minutesProjection[player].toFixed(0); else var mpg = 0;
-            }else{
+        var teams = [];
+        // add this info plus team to playerAdjust table; make FPs/Minute a range between 0 and 2 with step of 0.1; make minutes a range between 0 and 48 with step of 1, make Proj a text that updates to fps/minute * minutes
+        var table = document.getElementById("playerAdjustTable");
+        var contestDataTable = document.getElementById("contestDataTable");
+        var rows = contestDataTable.rows;
+        for(let r of rows){
+            if(r.rowIndex == 0) continue;
+            var row = table.insertRow(-1);
+            var name = row.insertCell(0);
+            var team = row.insertCell(1);
+            var fps = row.insertCell(2);
+            var mins = row.insertCell(3);
+            var proj = row.insertCell(4);
+            var injured = row.insertCell(5);
+
+            var player = r.cells[1].innerHTML;
+            if(player in data){
+                var ppm = data[player]['DKFPsPerMin'].toFixed(2);
+                var mpg = data[player]['MinsPerGame'].toFixed(0);
+            } else{
                 var ppm = 0;
-                if(player in minutesProjection) var mpg = minutesProjection[player].toFixed(0); else var mpg = 0;
+                var mpg = 0;
             }
 
-        }else if(player in json) {
-            var ppm = json[player]['DKFPsPerMin'].toFixed(2);
-            if(player in minutesProjection) var mpg = minutesProjection[player].toFixed(0); else var mpg = 0;
-        }else{
-            var ppm = 0;
-            if(player in minutesProjection) var mpg = minutesProjection[player].toFixed(0); else var mpg = 0;
+            name.innerHTML = r.cells[1].innerHTML;
+            team.innerHTML = r.cells[3].innerHTML;
+            fps.innerHTML = '<text style="width:20%">'+ppm+'</text><input style="width:80%" type="range" value='+ppm+' min="0" max="2" step="0.01" onchange="updateProj(this)">';
+            fps.setAttribute('origproj', ppm);
+            mins.innerHTML = '<text style="width:20%">'+mpg+'</text><input  style="width:80%"type="range" value='+mpg+' min="0" max="48" step="0.5" onchange="updateProj(this)">';
+            mins.setAttribute('origmins', mpg);
+            proj.innerHTML = (ppm * mpg).toFixed(1);
+            injured.innerHTML = '<button class="healthy" onclick="toggleInjured(this)">Healthy</button>';
+            if(!teams.includes(r.cells[3].innerHTML)) teams.push(r.cells[3].innerHTML);
         }
-
-        name.innerHTML = r.cells[1].innerHTML;
-        team.innerHTML = r.cells[3].innerHTML;
-        fps.innerHTML = '<text style="width:20%">'+ppm+'</text><input style="width:80%" type="range" value='+ppm+' min="0" max="2" step="0.01" onchange="updateProj(this)">';
-        fps.setAttribute('origproj', ppm);
-        mins.innerHTML = '<text style="width:20%">'+mpg+'</text><input  style="width:80%"type="range" value='+mpg+' min="0" max="48" step="0.5" onchange="updateProj(this)">';
-        mins.setAttribute('origmins', mpg);
-        proj.innerHTML = (ppm * mpg).toFixed(1);
-        injured.innerHTML = '<button class="healthy" onclick="toggleInjured(this)">Healthy</button>';
-        if(!teams.includes(r.cells[3].innerHTML)) teams.push(r.cells[3].innerHTML);
-    }
-    // Add teams to teamSelect
-    var teamSelect = document.getElementById("teamSelect");
-    for(let t of teams){
-        var option = document.createElement("option");
-        option.text = t;
-        option.value = t;
-        teamSelect.add(option);
-    }
-
-    team240();
+        // Add teams to teamSelect
+        var teamSelect = document.getElementById("teamSelect");
+        teams = teams.sort();
+        for(let t of teams){
+            var option = document.createElement("option");
+            option.text = t;
+            option.value = t;
+            teamSelect.add(option);
+        }
+        return;
+    }).then(() => {
+        team240();
+    });    
 
 }
 
@@ -470,14 +477,17 @@ async function team240(){
         if(r.cells[1].innerHTML in teamMins) teamMins[r.cells[1].innerHTML] += productOfAttributes(r.cells[3]); else teamMins[r.cells[1].innerHTML] = productOfAttributes(r.cells[3]);
         if(r.cells[1].innerHTML in teamProj) teamProj[r.cells[1].innerHTML] += Number(r.cells[2].getAttribute('origproj'))*Number(r.cells[3].getAttribute('origmins')); else teamProj[r.cells[1].innerHTML] = Number(r.cells[2].getAttribute('origproj'))*Number(r.cells[3].getAttribute('origmins'));
         if(r.cells[1].innerHTML in teamNewProj) teamNewProj[r.cells[1].innerHTML] += productOfAttributes(r.cells[2])*productOfAttributes(r.cells[3]); else teamNewProj[r.cells[1].innerHTML] = productOfAttributes(r.cells[2])*productOfAttributes(r.cells[3]);
-        if(r.cells[1].innerHTML in teamNumOut && r.cells[5].getElementsByTagName('button')[0].innerHTML == "Injured") teamNumOut[r.cells[1].innerHTML] += 1; else teamNumOut[r.cells[1].innerHTML] = 1;
+        if(r.cells[1].innerHTML in teamNumOut && r.cells[5].getElementsByTagName('button')[0].innerHTML == "Injured") teamNumOut[r.cells[1].innerHTML] += productOfAttributes(r.cells[2])*productOfAttributes(r.cells[3])/30; else teamNumOut[r.cells[1].innerHTML] = productOfAttributes(r.cells[2])*productOfAttributes(r.cells[3])/30;
     }
     
 
     for(let r of table.rows){
         if(r.rowIndex == 0) continue;
         let teamMult = 240/Number(teamMins[r.cells[1].innerHTML]);
-        let projMult = teamProj[r.cells[1].innerHTML]/teamNewProj[r.cells[1].innerHTML]*(1-0.03*teamNumOut[r.cells[1].innerHTML]);
+        let projMult = teamProj[r.cells[1].innerHTML]/teamNewProj[r.cells[1].innerHTML]*(1-0.05*teamNumOut[r.cells[1].innerHTML]);
+
+        let startmins = Number(r.cells[3].getAttribute('origmins'));
+        if(startmins > 35) teamMult = 1; else if(startmins > 30) teamMult = (2+teamMult)/3; else if(startmins > 26) teamMult = (1+teamMult)/2; else if(startmins > 18) teamMult=teamMult; else if(startmins > 10) teamMult = (teamMult+0.5)/2; else if(startmins > 5) teamMult = 0.5; else teamMult = 0;
 
         r.cells[3].getElementsByTagName("input")[0].value = (productOfAttributes(r.cells[3])*teamMult).toFixed(0);
         r.cells[2].getElementsByTagName("input")[0].value = (productOfAttributes(r.cells[2])*projMult).toFixed(2);
@@ -495,7 +505,6 @@ async function team240(){
 
 function getDataFromLastStats(stat){
     var json = getInfoFromJSON("player_stats.json");
-    console.log(Object.keys(json).length);
     var data = {};
     for(let p of json){
         if(stat in p){
@@ -519,8 +528,8 @@ function filterByTeam(select, element){
         if(r.rowIndex == 0) continue;
         if(r.cells[1].innerHTML == team || team == "All"){ 
             r.style.display = "table-row";
-            fpsmin += Number(r.cells[2].getElementsByTagName("input")[0].value);
             mins += Number(r.cells[3].getElementsByTagName("input")[0].value);
+            fpsmin += productOfAttributes(r.cells[2])*productOfAttributes(r.cells[3])/48;
             proj += Number(r.cells[4].innerHTML);
         }
         else r.style.display = "none";
@@ -567,7 +576,7 @@ function updateProj(element){
     filterByTeam(document.getElementById("teamSelect"), "playerAdjustTable");
 }
 
-function updateContestDataTable(){
+async function updateContestDataTable(){
     var table = document.getElementById("contestDataTable");
     var rows = table.rows;
     var adjustPlayers = document.getElementById("playerAdjustTable");
@@ -623,7 +632,7 @@ async function buildLineups(){
                 player['UTIL'] = 1;
                 player[player.Team] = 1;
                 
-                if(!player.Team in teams){ 
+                if(!(player.Team in teams)){ 
                     teams[player.Team] = Math.random();
                     teams[player.Opponent] = teams[player.Team];
                 }
@@ -1012,8 +1021,8 @@ async function applyInjury(player, team){
                         projboost = -1;
                         minboost = -1;
                     }else{
-                        if(startmins > 35) minboost = -.09; else if(startmins > 30) minboost = -.07; else if(startmins > 26) minboost = -0.05; else if(startmins > 18) minboost = -0.04; else if(startmins > 10) minboost = 0.15; else if(startmins > 5) minboost = 0.25; else minboost = 0.9;
-                        if(startproj > 1.2) projboost = -0.05; else if(startproj > 0.95) projboost = 0; else if(startproj > .5) projboost = 0.01; 
+                        if(startmins > 35) minboost = 0.005; else if(startmins > 30) minboost = 0.01; else if(startmins > 26) minboost = .015; else if(startmins > 18) minboost = .03; else if(startmins > 10) minboost = 0.08; else if(startmins > 5) minboost = 0.25; else minboost = 0.5;
+                        if(startproj > 1.2) projboost = 0; else if(startproj > 0.95) projboost = 0.05; else if(startproj > .5) projboost = 0.08; 
                     }                          
                     let newproj = productOfAttributes(r.cells[2])*(1+projboost);
                     let newmins = productOfAttributes(r.cells[3])*(1+minboost);
