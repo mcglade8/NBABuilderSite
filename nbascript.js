@@ -391,12 +391,18 @@ function replaceAccented(str){
 async function getPlayerInfo(){
     let promise = new Promise((resolve) => {
     var playerdefaults = getInfoFromJSON("season_stats.json");
+    var ema = getInfoFromJSON("ema.json");
     var json = {};
     for(let p in playerdefaults){
         let name = replaceAccented(playerdefaults[p]['Player']);
-        let DKFPs = Number(playerdefaults[p]['FG'])*2 + Number(playerdefaults[p]['3P'])*1.5 + Number(playerdefaults[p]['FT']) + Number(playerdefaults[p]['TRB'])*1.2 + Number(playerdefaults[p]['AST'])*1.5 + Number(playerdefaults[p]['STL'])*3 + Number(playerdefaults[p]['BLK'])*3 - Number(playerdefaults[p]['TOV'])*1;
-        let DKFPsPerMin = DKFPs/Number(playerdefaults[p]['MP']);
-        let MinsPerGame = Number(playerdefaults[p]['MP'])/Number(playerdefaults[p]['G']);
+        if(name in ema){
+            var DKFPsPerMin = ema[name]['FPTS_EMA']/ema[name]['MIN_EMA'];
+            var MinsPerGame = ema[name]['MIN_EMA'];
+        }else{
+            let DKFPs = Number(playerdefaults[p]['FG'])*2 + Number(playerdefaults[p]['3P'])*1.5 + Number(playerdefaults[p]['FT']) + Number(playerdefaults[p]['TRB'])*1.2 + Number(playerdefaults[p]['AST'])*1.5 + Number(playerdefaults[p]['STL'])*3 + Number(playerdefaults[p]['BLK'])*3 - Number(playerdefaults[p]['TOV'])*1;
+            var DKFPsPerMin = DKFPs/Number(playerdefaults[p]['MP']);
+            var MinsPerGame = Number(playerdefaults[p]['MP'])/Number(playerdefaults[p]['G']);
+        }
         json[name] = {'DKFPsPerMin': DKFPsPerMin, 'MinsPerGame': MinsPerGame};
     }
     var minutesProjection = getDataFromLastStats("MIN");
