@@ -125,15 +125,14 @@ function savetableDataNBA(){
 // Load contestDataTable data from local storage
 function loadtableDataNBA(){
     var table = document.getElementById("contestDataTable");
-    var tableDataNBA = JSON.parse(localStorage.getItem("tableDataNBA"));
+    var tableDataNBA = getInfoFromJSON("dkscrape.json");
     var firstRow = table.rows[0];
-    for (var i = 0; i < tableDataNBA.length; i++) {
+    for (let k of Object.keys(tableDataNBA)){
         var row = table.insertRow(-1);
-        for (let c of firstRow.cells) {
-            let info = c.innerHTML;
-            if(info == "Own") continue;
-            row.insertCell(-1).innerHTML = tableDataNBA[i][info];
-
+        row.insertCell(0).innerHTML = k;
+        for(let i = 1; i < firstRow.cells.length; i++){
+            var cell = row.insertCell(i);
+            cell.innerHTML = tableDataNBA[k][firstRow.cells[i].innerHTML];
         }
     }
 }
@@ -153,13 +152,7 @@ $(document).ready(async function(){
         resolve();
     });
     promise.then(() => {
-        return getPlayerInfo();
-    }).then(() => {
-        
-        return updateContestDataTable();
-    }).then(() => {
         colorRowsBasedOnTeam(document.getElementById('contestDataTable'), 3);
-        colorRowsBasedOnTeam(document.getElementById('playerAdjustTable'), 1);
         return;
     });
 });
@@ -391,13 +384,16 @@ function replaceAccented(str){
 async function getPlayerInfo(){
     let promise = new Promise((resolve) => {
     var playerdefaults = getInfoFromJSON("season_stats.json");
-    var ema = getInfoFromJSON("ema.json");
+    var medians = getInfoFromJSON("medians.json");
     var json = {};
     for(let p in playerdefaults){
         let name = replaceAccented(playerdefaults[p]['Player']);
-        if(name in ema){
-            var DKFPsPerMin = ema[name]['FPTS_EMA']/ema[name]['MIN_EMA'];
-            var MinsPerGame = ema[name]['MIN_EMA'];
+        if(name in medians){
+            var DKFPsPerMin = medians[name]['FPTS_MEDIAN'];
+            var MinsPerGame = medians[name]['MIN_MEDIAN'];
+            //let DKFPs = Number(playerdefaults[p]['FG'])*2 + Number(playerdefaults[p]['3P'])*1.5 + Number(playerdefaults[p]['FT']) + Number(playerdefaults[p]['TRB'])*1.2 + Number(playerdefaults[p]['AST'])*1.5 + Number(playerdefaults[p]['STL'])*3 + Number(playerdefaults[p]['BLK'])*3 - Number(playerdefaults[p]['TOV'])*1;
+            //DKFPsPerMin = DKFPsPerMin*0.8 + DKFPs/Number(playerdefaults[p]['MP'])*0.2;
+            //MinsPerGame = MinsPerGame*0.8 + Number(playerdefaults[p]['MP'])/Number(playerdefaults[p]['G']) * 0.2;
         }else{
             let DKFPs = Number(playerdefaults[p]['FG'])*2 + Number(playerdefaults[p]['3P'])*1.5 + Number(playerdefaults[p]['FT']) + Number(playerdefaults[p]['TRB'])*1.2 + Number(playerdefaults[p]['AST'])*1.5 + Number(playerdefaults[p]['STL'])*3 + Number(playerdefaults[p]['BLK'])*3 - Number(playerdefaults[p]['TOV'])*1;
             var DKFPsPerMin = DKFPs/Number(playerdefaults[p]['MP']);
@@ -405,20 +401,10 @@ async function getPlayerInfo(){
         }
         json[name] = {'DKFPsPerMin': DKFPsPerMin, 'MinsPerGame': MinsPerGame};
     }
-    var minutesProjection = getDataFromLastStats("MIN");
-    resolve([json, minutesProjection]);
+    resolve(json);
     });
 
     promise.then((data) => {
-        var json = data[0];
-        var minutesProjection = data[1];
-        for(let p in json){
-            if(p in minutesProjection) json[p]['MinsPerGame'] = 0.7*json[p]['MinsPerGame'] + 0.3*Number(minutesProjection[p].substring(0,2));
-        }
-        return json;
-    }).then((data) => {
-        console.log(data);
-
         var teams = [];
         // add this info plus team to playerAdjust table; make FPs/Minute a range between 0 and 2 with step of 0.1; make minutes a range between 0 and 48 with step of 1, make Proj a text that updates to fps/minute * minutes
         var table = document.getElementById("playerAdjustTable");
@@ -470,7 +456,7 @@ async function getPlayerInfo(){
 }
 
 async function team240(){
-
+    return; // temporarily disabled
     let promise = new Promise((resolve) => {
     var table = document.getElementById("playerAdjustTable");
     // Ensuring team minutes add up to 240 (give or take rounding errors)
@@ -489,13 +475,51 @@ async function team240(){
 
     for(let r of table.rows){
         if(r.rowIndex == 0) continue;
-        let teamMult = 240/Number(teamMins[r.cells[1].innerHTML]);
+        let minAdj = 240-Number(teamMins[r.cells[1].innerHTML]);
         let projMult = teamProj[r.cells[1].innerHTML]/teamNewProj[r.cells[1].innerHTML]*(1-0.05*teamNumOut[r.cells[1].innerHTML]);
+        let minsForPlayer = 0;
+        let startmins = 1;//productOfAttributes(r.cells[3]);
+        minsForPlayer = minAdj/startmins;
 
-        let startmins = Number(r.cells[3].getAttribute('origmins'));
-        if(startmins > 35) teamMult = 1; else if(startmins > 30) teamMult = (2+teamMult)/3; else if(startmins > 26) teamMult = (1+teamMult)/2; else if(startmins > 18) teamMult=teamMult; else if(startmins > 10) teamMult = (teamMult+0.5)/2; else if(startmins > 5) teamMult = 0.5; else teamMult = 0;
+        // if(minAdj > 0){
+        //     if(startmins >= 35) {
+        //         minsForPlayer = minAdj/48;
+        //     }
+        //     if((startmins < 10 && startmins > 4) || (startmins >=20 && startmins < 25)){
+        //         minsForPlayer = minAdj/25;
+        //     }
+        //     if(startmins >=10 && startmins < 15){
+        //         minsForPlayer = minAdj/20;
+        //     }
+        //     if(startmins >=15 && startmins < 20){
+        //         minsForPlayer = minAdj/;
+        //     }
+        //     if(startmins >=25 && startmins < 35){
+        //         minsForPlayer = 2;
+        //     }
+            
+        // }else{
+        //     minsForPlayer = minAdj/startmins;
+        //     if(startmins >= 35) {
+        //         minsForPlayer = -0.5;
+        //     }
+        //     if(startmins < 10 && startmins > 4){
+        //         minsForPlayer = -3.5;
+        //     }
+        //     if(startmins >=10 && startmins < 15){
+        //         minsForPlayer = -2;
+        //     }
+        //     if(startmins >=15 && startmins < 20){
+        //         minsForPlayer = -4;
+        //     }
+        //     if(startmins >=25 && startmins < 35){
+        //         minsForPlayer = -1.5;
+        //     }
+        //     if(startmins <= 4) minsForPlayer = -startmins;
+        // }
+        teamMins[r.cells[1].innerHTML] = Number(teamMins[r.cells[1].innerHTML]) - minsForPlayer;
 
-        r.cells[3].getElementsByTagName("input")[0].value = (productOfAttributes(r.cells[3])*teamMult).toFixed(0);
+        r.cells[3].getElementsByTagName("input")[0].value = (productOfAttributes(r.cells[3])+minsForPlayer).toFixed(0);
         r.cells[2].getElementsByTagName("input")[0].value = (productOfAttributes(r.cells[2])*projMult).toFixed(2);
     }
     resolve();});
@@ -605,16 +629,14 @@ async function buildLineups(){
             var rows = table.rows;
             var teams = [];
 
-            var players = [];
+            var info = getInfoFromJSON("dkscrape.json");
+            var players = {};
             // get objects of all players from table and add to players
             // objects should have name as key and all other row info as values
-            for(let i = 1; i < rows.length; i++){
-                var player = {};
-                for(let j = 0; j < rows[i].cells.length; j++){
-                    let info = rows[0].cells[j].innerHTML;
-                    player[info] = rows[i].cells[j].innerHTML;
-                }
-                if(player['Projected'] < 10) continue;
+            for(let p of Object.keys(info)){
+                let player = info[p];
+                player['Name'] = p;
+                if(player['Projection'] < 10) continue;
                 // Add position to player object with value 1
                 if(player.Position.includes("PG")){ 
                     player['PG'] = 1;
@@ -640,26 +662,28 @@ async function buildLineups(){
                 
                 if(!(player.Team in teams)){ 
                     teams[player.Team] = Math.random();
-                    teams[player.Opponent] = teams[player.Team];
+                    teams[player.Opp] = teams[player.Team];
                 }
 
-                player = randomizeProjection(player, teams);
+                player['Projected'] = randomizeProjection(player, teams);
                 players[player.Name] = player;
+                if(player.Name == "Mike Conley") console.log(player.Projected);
             }
             resolve(players);
         });
 
         promise.then((players) => {
         // solve for max projection with constraints
+            //console.log(players);
             require(['solver'], function(solver){
                 var teams = [];
                 var opponents = {};
                 for(let p in players){
                     if(!players[p].Team in teams) {
                         teams.push(players[p].Team);
-                        opponents[players[p].Team] = players[p].Opponent;
+                        opponents[players[p].Team] = players[p].Opp;
                     }
-                    players[p][alphabetize(players[p].Team, players[p].Opponent)] = 1;
+                    players[p][alphabetize(players[p].Team, players[p].Opp)] = 1;
                 }
                 var model = {
                     "optimize": "Projected",
@@ -673,7 +697,7 @@ async function buildLineups(){
                         "G": {"min": 4},
                         "F": {"min": 4},
                         "UTIL": {"equal": 8},
-                        "Salary": {"max": 50000}
+                        "Salary": {"max": 50000},
                     },
                     "variables": players,
                     "binaries": players
@@ -686,7 +710,7 @@ async function buildLineups(){
                 }
                 
                 var result = solver.Solve(model);
-                console.log(result);
+                //console.log(result);
                 addLineupToTable(result, players);
             }); 
         });
@@ -709,6 +733,7 @@ function addLineupToTable(result, players){
     }
     var totalSalary = 0;
     var totalProj = 0;
+    var totalKelly = 0;
 
     // randomize lineupPlayers order and finalize when order matches PG, SG, SF, PF, C, G, F, UTIL
     
@@ -731,6 +756,7 @@ function addLineupToTable(result, players){
         c.style.color = getTeamSecondaryColor(p.Team);
         totalSalary += Number(p.Salary);
         totalProj += Number(p.Projected);
+        totalKelly += Number(p.Kelly);
     }
     let s = row.insertCell(-1)
     s.innerHTML = totalSalary;
@@ -738,6 +764,9 @@ function addLineupToTable(result, players){
     let p = row.insertCell(-1)
     p.innerHTML = totalProj.toFixed(1);
     p.backgroundColor = colorByScale(200, 400, totalProj);
+    let k = row.insertCell(-1)
+    k.innerHTML = totalKelly.toFixed(2);
+    k.backgroundColor = colorByScale(0, 1, totalKelly);
     document.getElementById('lineupsBuilt').innerHTML = Number(document.getElementById('lineupsBuilt').innerHTML) + 1;
 }
 
@@ -770,18 +799,14 @@ function shuffle(array) {
 
 function randomizeProjection(p, teams){
     var teamFlatness = teams[p.Team] > 0.5;
-    var mins = Number(p.Minutes);
-    var proj = Number(p.Projected);
-    var ppm = proj/mins;
-    var minsRand = (Math.random() + Math.random() + Math.random() )* 14/3 - 7;
-    var ppmRand = (Math.random() + Math.random() + Math.random() )* 0.24/3 - 0.12;
-    var minsNew = mins + minsRand;
-    if(teamFlatness && mins > 0) minsNew = (8*minsNew + 80)/9;
-    var ppmNew = ppm + ppmRand;
-    var projNew = minsNew * ppmNew;
-    if(projNew < 0) projNew = 0;
-    p.Projected = projNew.toFixed(1);
-    return p;
+    var sd = Number(p.SD);
+    var proj = Number(p.Projection)*(1*(Number(p.Kelly)));
+    if(teamFlatness){ 
+        proj = 3+proj*.9;
+        sd = 1+sd*.8;
+    }
+    return (Math.random() + Math.random() + Math.random() -1.5)*sd +proj;
+    
 }
 
 function updateOwnership(){
@@ -979,6 +1004,7 @@ function getTeamSecondaryColor(team){
 
 function resetPlayerAdjustTable(){
     localStorage.removeItem("savedPlayerDataNBA");
+    localStorage.removeItem("injuriesNBA");
     location.reload();
 }
 
@@ -1008,7 +1034,15 @@ async function toggleInjured(btn){
 
 
 async function applyInjury(player, team){
-
+    if(localStorage.injuriesNBA){
+        var injuries = JSON.parse(localStorage.injuriesNBA);
+        if(!(injuries.includes(player))) injuries.push(player);
+        localStorage.injuriesNBA = JSON.stringify(injuries);
+    }else{
+        injuries = [];
+        injuries.push(player);
+        localStorage.injuriesNBA = JSON.stringify(injuries);
+    }
     var att = playerNameAsAttribute(player);
     var playerAdjustTable = document.getElementById("playerAdjustTable");
     var adjustRows = playerAdjustTable.rows;
@@ -1040,7 +1074,7 @@ async function applyInjury(player, team){
                 }
                 );
                 promise.then((values) => {
-                    console.log(att);
+                    //console.log(att);
                     r.cells[2].setAttribute(att, 1+values[2]);
                     r.cells[3].setAttribute(att, 1+values[3]);
 
@@ -1048,7 +1082,7 @@ async function applyInjury(player, team){
                     r.cells[3].getElementsByTagName("input")[0].value = values[1];
                     return "done";
                 }).then((str) => {
-                    console.log(str);
+                    //console.log(str);
                     updateProj(r.cells[2].getElementsByTagName("input")[0]);
                     updateProj(r.cells[3].getElementsByTagName("input")[0]);
                 });
@@ -1079,7 +1113,27 @@ function playerNameAsAttribute(player){
     return name;
 }
 
+async function loadInjuries(){
+    if(localStorage.injuriesNBA){
+        var injuries = JSON.parse(localStorage.injuriesNBA);
+        var playerAdjustTable = document.getElementById("playerAdjustTable");
+        var adjustRows = playerAdjustTable.rows;
+        for(let r of adjustRows){
+            if(r.rowIndex == 0) continue;
+            if(injuries.includes(r.cells[0].innerHTML)){
+                r.cells[5].getElementsByTagName("button")[0].innerHTML = "Injured";
+                r.cells[5].getElementsByTagName("button")[0].className = "injured";
+                applyInjury(r.cells[0].innerHTML, r.cells[1].innerHTML);
+            }
+        }
+    }
+}
+
 async function removeInjury(player, team){
+    var injuries = JSON.parse(localStorage.injuriesNBA);
+    injuries.splice(injuries.indexOf(player), 1);
+    localStorage.injuriesNBA = JSON.stringify(injuries);
+     
     var att = playerNameAsAttribute(player);
     var playerAdjustTable = document.getElementById("playerAdjustTable");
     var adjustRows = playerAdjustTable.rows;
@@ -1098,7 +1152,7 @@ async function removeInjury(player, team){
                         r.cells[3].getElementsByTagName("input")[0].value = values[1];
                         return "done";
                     }).then((str) => {
-                        console.log(str);
+                        //console.log(str);
                         updateProj(r.cells[2].getElementsByTagName("input")[0]);
                         updateProj(r.cells[3].getElementsByTagName("input")[0]);
                     });
@@ -1117,7 +1171,7 @@ async function removeInjury(player, team){
                         r.cells[3].getElementsByTagName("input")[0].value = values[1];
                         return "done";
                     }).then((str) => {
-                        console.log(str);
+                        //console.log(str);
                         updateProj(r.cells[2].getElementsByTagName("input")[0]);
                         updateProj(r.cells[3].getElementsByTagName("input")[0]);
                     });
